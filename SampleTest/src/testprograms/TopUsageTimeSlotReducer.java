@@ -17,6 +17,9 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 public  class TopUsageTimeSlotReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 	private  Map<Text, IntWritable> userCountMap = new HashMap<>();
 	
+	/*Calculate the sum of events grouped by time-slot from all mappers 
+	 * and writes into HashMap, time-slot as key, sum as value
+	 */
 	@Override
 	public void reduce(Text key, Iterable<IntWritable> values,Context context)
 						throws IOException, InterruptedException {
@@ -27,13 +30,15 @@ public  class TopUsageTimeSlotReducer extends Reducer<Text, IntWritable, Text, I
 		userCountMap.put(new Text(key), new IntWritable(totalCount));
 	}
 	
+	// Calls the descending Sort method to sort the Hashmap by values descendingly
+	 
 	@Override
 	protected void cleanup(Context context) throws IOException,InterruptedException {
 		
 		Map<Text, IntWritable> descendSortedMap = descendSortByValues(userCountMap);
 		int resultset = 0;
 		for (Text key: descendSortedMap.keySet()) {
-			if ( resultset++ == 1) {
+			if ( resultset++ == 1) {  //to get the highest (timeslot)key, (event occurrences)
 				break;
 			}
 		    context.write(key, descendSortedMap.get(key));

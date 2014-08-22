@@ -17,6 +17,9 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 public  class TopTenUserReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 	private  Map<Text, IntWritable> userCountMap = new HashMap<>();
 	
+	/*Calculate the sum of events grouped by userid from all mappers 
+	 * and writes into HashMap, userid as key, sum of event as value
+	 */
 	@Override
 	public void reduce(Text key, Iterable<IntWritable> values, Context context)
 						throws IOException, InterruptedException {
@@ -27,19 +30,21 @@ public  class TopTenUserReducer extends Reducer<Text, IntWritable, Text, IntWrit
 		userCountMap.put(new Text(key), new IntWritable(totalCount));
 	}
 	
+	// Calls the descending Sort method to sort the Hashmap by values in descending order 
 	@Override
 	protected void cleanup(Context context) throws IOException,InterruptedException {
 		
 		Map<Text, IntWritable> descendSortedMap = descendSortByValues(userCountMap);
 		int resultset = 0;
 		for (Text key: descendSortedMap.keySet()) {
-			if ( resultset++ == 10) {
+			if ( resultset++ == 10) {  //to get top 10 users
 				break;
 			}
 		    context.write(key, descendSortedMap.get(key));
 		}
 	}
 
+	//Descending Sort of the HashMap
 	private <K extends Comparable, V extends Comparable> Map<K,V> descendSortByValues(Map<K,V> map) {
 	   List<Map.Entry<K, V>> entries = new LinkedList<Map.Entry<K,V>>(map.entrySet());
 	   
